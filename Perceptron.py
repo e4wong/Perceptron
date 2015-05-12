@@ -76,7 +76,7 @@ def vote(results, features):
 
 def voted_perceptron(test_set, results):
 	num_samples = len(test_set)
-	errors = 1
+	errors = 0
 	for (features, label) in test_set:
 		tally = vote(results, features)
 		if tally <= 0 and label > 0:
@@ -85,6 +85,30 @@ def voted_perceptron(test_set, results):
 			errors = errors + 1
 	return float(errors)/float(num_samples)
 
+def scale(original, scalar):
+	scaled = []
+	for i in range(0, len(original)):
+		scaled.append(original[i] * scalar)
+	return scaled
+
+def average_scaled_w(results):
+	average_w = results[0][0]
+	for i in range (1, len(results)):
+		(w, count)  = results[i]
+		average_w = add_vector(average_w, scale(w, count), 1)
+	return average_w
+
+def average_perceptron(test_set, results):
+	w = average_scaled_w(results)
+	num_samples = len(test_set)
+	errors = 0
+	for (feature, label) in test_set:
+		dp = dot_product(feature, w)
+		if dp <= 0 and label > 0:
+			errors = errors + 1
+		if dp >= 0 and label < 0:
+			errors = errors + 1
+	return float(errors)/float(num_samples)
 
 load("hw4atrain.txt", training_set_a)
 load("hw4atest.txt",test_set_a)
@@ -96,4 +120,5 @@ convertLabel(test_set_a, 0 ,6)
 
 vecs = perceptron(training_set_a)
 print voted_perceptron(test_set_a, vecs)
+print average_perceptron(test_set_a, vecs)
 
