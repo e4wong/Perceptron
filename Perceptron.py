@@ -64,6 +64,28 @@ def perceptron(training_set):
 			counter = counter + 1
 	return res
 
+def vote(results, features):
+	counter = 0
+	for (w, count) in results:
+		dp = dot_product(w, features)
+		if dp < 0:
+			counter = counter - count
+		elif dp > 0:
+			counter = counter + count
+	return counter
+
+def voted_perceptron(test_set, results):
+	num_samples = len(test_set)
+	errors = 1
+	for (features, label) in test_set:
+		tally = vote(results, features)
+		if tally <= 0 and label > 0:
+			errors = errors + 1
+		elif tally >= 0 and label < 0:
+			errors = errors + 1
+	return float(errors)/float(num_samples)
+
+
 load("hw4atrain.txt", training_set_a)
 load("hw4atest.txt",test_set_a)
 load("hw4btrain.txt", training_set_b)
@@ -73,6 +95,5 @@ convertLabel(training_set_a, 0, 6)
 convertLabel(test_set_a, 0 ,6)
 
 vecs = perceptron(training_set_a)
-print vecs[0]
-
+print voted_perceptron(test_set_a, vecs)
 
