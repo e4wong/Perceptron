@@ -1,25 +1,20 @@
 import re
-import numpy
+import numpy as np
 import math
 import random
 import copy
 
-training_set_a = [] 
-test_set_a = []
-training_set_b = [] 
-test_set_b = []
-
-debug_set = []
-
-def load(fn, ds):
+def load(fn):
+	ds = []
 	f = open(fn, "r")
 	for line in f:
 		tokens = line.split()
 		features = []
-		for i in range(0, len(tokens) - 1):
+		for i in range(len(tokens) - 1):
 			features.append(int(tokens[i]))
-		data = (features, int(tokens[len(tokens) - 1]))
+		data = (features, int(tokens[-1]))
 		ds.append(data)
+	return ds
 
 def convertLabel(ds, label_neg, label_pos):
 	for i in range(0, len(ds)):
@@ -30,6 +25,7 @@ def convertLabel(ds, label_neg, label_pos):
 			ds[i] = (features, -1)
 		else:
 			print "uh oh"
+
 def init_w(sample):
 	w = []
 	for i in range(0,len(sample[0])):
@@ -151,21 +147,22 @@ def one_vs_all(test_set, w_vectors):
 			errors = errors + 1
 	return float(errors) / float(num_samples)
 
+def main():
+	training_set_a = load("hw4atrain.txt")
+	test_set_a = load("hw4atest.txt")
+	training_set_b = load("hw4btrain.txt")
+	test_set_b = load("hw4btest.txt")
+	debug_set = load("test.txt")
 
+	convertLabel(training_set_a, [0], [6])
+	convertLabel(test_set_a, [0], [6])
 
-load("hw4atrain.txt", training_set_a)
-load("hw4atest.txt", test_set_a)
-load("hw4btrain.txt", training_set_b)
-load("hw4btest.txt", test_set_b)
-load("test.txt", debug_set)
+	#vecs = perceptron(training_set_a)
+	#print voted_perceptron(test_set_a, vecs)
+	#print average_perceptron(test_set_a, vecs)
 
-convertLabel(training_set_a, [0], [6])
-convertLabel(test_set_a, [0], [6])
+	w_vectors = one_vs_all_vector_generate(training_set_b)
+	print one_vs_all(test_set_b, w_vectors)
 
-#vecs = perceptron(training_set_a)
-#print voted_perceptron(test_set_a, vecs)
-#print average_perceptron(test_set_a, vecs)
-
-w_vectors = one_vs_all_vector_generate(training_set_b)
-print one_vs_all(test_set_b, w_vectors)
-
+if __name__ == '__main__':
+	main()
