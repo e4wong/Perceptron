@@ -5,7 +5,7 @@ import random
 import copy
 
 def load(fn):
-	ds = []
+	data_matrix = []
 	f = open(fn, "r")
 	for line in f:
 		tokens = line.split()
@@ -13,11 +13,11 @@ def load(fn):
 		for i in range(len(tokens) - 1):
 			features.append(int(tokens[i]))
 		data = (features, int(tokens[-1]))
-		ds.append(data)
-	return ds
+		data_matrix.append(data)
+	return np.array(data_matrix)
 
-def convertLabel(ds, label_neg, label_pos):
-	for i in range(0, len(ds)):
+def convertLabel(data_matrix, label_neg, label_pos):
+	for i in range(len(ds)):
 		(features, label) = ds[i]
 		if label in label_pos:
 			ds[i] = (features, 1)
