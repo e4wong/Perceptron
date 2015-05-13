@@ -2,11 +2,14 @@ import re
 import numpy
 import math
 import random
+import copy
 
 training_set_a = [] 
 test_set_a = []
 training_set_b = [] 
 test_set_b = []
+
+debug_set = []
 
 def load(fn, ds):
 	f = open(fn, "r")
@@ -21,9 +24,9 @@ def load(fn, ds):
 def convertLabel(ds, label_neg, label_pos):
 	for i in range(0, len(ds)):
 		(features, label) = ds[i]
-		if label == label_pos:
+		if label in label_pos:
 			ds[i] = (features, 1)
-		elif label == label_neg:
+		elif label in label_neg:
 			ds[i] = (features, -1)
 		else:
 			print "uh oh"
@@ -57,11 +60,12 @@ def perceptron(training_set):
 	counter = 1
 	for (features, label) in training_set:
 		if label * dot_product(w, features) <= 0:
-			res.append((w,counter))
+			res.append((w, counter))
 			counter = 1
 			w = add_vector(w, features, label)
 		else:
 			counter = counter + 1
+	res.append((w, counter))
 	return res
 
 def vote(results, features):
@@ -110,15 +114,58 @@ def average_perceptron(test_set, results):
 			errors = errors + 1
 	return float(errors)/float(num_samples)
 
+def complement10(k):
+	a = []
+	b = []
+	for i in range (0, 10):
+		if i == k:
+			a.append(i)
+		else:
+			b.append(i)
+	return (a,b)
+
+def one_vs_all_vector_generate(training_set):
+	w_list = []
+	for i in range(0, 10):
+		(one, a) = complement10(i)
+		training_set_copy = copy.deepcopy(training_set)
+		convertLabel(training_set_copy, one, a)
+		vecs = perceptron(training_set_copy)
+		w_list.append(vecs[len(vecs) - 1])
+	return w_list
+
+def one_vs_all(test_set, w_vectors):
+	num_samples = len(test_set)
+	errors = 0
+	for (feature, label) in test_set:
+		guess = -1
+		for i in range(0,10):
+			w = w_vectors[i][0]
+			dp = -1 * dot_product(w, feature)
+			if dp > 0:
+				if guess == -1:
+					guess = i
+				else :
+					guess = -2
+		if not(guess == label):
+			errors = errors + 1
+	return float(errors) / float(num_samples)
+
+
+
 load("hw4atrain.txt", training_set_a)
-load("hw4atest.txt",test_set_a)
+load("hw4atest.txt", test_set_a)
 load("hw4btrain.txt", training_set_b)
 load("hw4btest.txt", test_set_b)
+load("test.txt", debug_set)
 
-convertLabel(training_set_a, 0, 6)
-convertLabel(test_set_a, 0 ,6)
+convertLabel(training_set_a, [0], [6])
+convertLabel(test_set_a, [0], [6])
 
-vecs = perceptron(training_set_a)
-print voted_perceptron(test_set_a, vecs)
-print average_perceptron(test_set_a, vecs)
+#vecs = perceptron(training_set_a)
+#print voted_perceptron(test_set_a, vecs)
+#print average_perceptron(test_set_a, vecs)
+
+w_vectors = one_vs_all_vector_generate(training_set_b)
+print one_vs_all(test_set_b, w_vectors)
 
