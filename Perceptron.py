@@ -50,19 +50,33 @@ def add_vector(vector0, vector1, y):
 	return res
 
 
-def perceptron(training_set):
+def perceptron(training_set, times):
 	res = []
 	w = init_w(training_set[0])
 	counter = 1
-	for (features, label) in training_set:
-		if label * dot_product(w, features) <= 0:
-			res.append((w, counter))
-			counter = 1
-			w = add_vector(w, features, label)
-		else:
-			counter = counter + 1
-	res.append((w, counter))
+	for i in range(0, times):
+		for (features, label) in training_set:
+			if label * dot_product(w, features) <= 0:
+				res.append((w, counter))
+				counter = 1
+				w = add_vector(w, features, label)
+			else:
+				counter = counter + 1
+		res.append((w, counter))
 	return res
+
+def normal_perceptron(test_set, results):
+	w = results[-1][0]
+	num_samples = len(test_set)
+	errors = 0
+	for (features, label) in test_set:
+		dp = dot_product(w, features)
+		if dp <= 0 and label > 0:
+			errors = errors + 1
+		elif dp >=0 and label < 0:
+			errors = errors + 1
+
+	return float(errors)/float(num_samples)
 
 def vote(results, features):
 	counter = 0
@@ -84,6 +98,7 @@ def voted_perceptron(test_set, results):
 		elif tally >= 0 and label < 0:
 			errors = errors + 1
 	return float(errors)/float(num_samples)
+
 
 def scale(original, scalar):
 	scaled = []
@@ -126,13 +141,18 @@ def one_vs_all_vector_generate(training_set):
 		(one, a) = complement10(i)
 		training_set_copy = copy.deepcopy(training_set)
 		convertLabel(training_set_copy, one, a)
-		vecs = perceptron(training_set_copy)
+		vecs = perceptron(training_set_copy, 1)
 		w_list.append(vecs[len(vecs) - 1])
 	return w_list
 
 def one_vs_all(test_set, w_vectors):
 	num_samples = len(test_set)
 	errors = 0
+	label_count = [0] * 10
+	confusion_matrix = []
+	for i in range(0, 11):
+		confusion_matrix.append([float(0),float(0),float(0),float(0),float(0),float(0),float(0),float(0),float(0),float(0)])
+
 	for (feature, label) in test_set:
 		guess = -1
 		for i in range(0,10):
@@ -143,9 +163,23 @@ def one_vs_all(test_set, w_vectors):
 					guess = i
 				else :
 					guess = -2
-		if not(guess == label):
-			errors = errors + 1
-	return float(errors) / float(num_samples)
+		
+		if guess >= 0:
+			confusion_matrix[guess][label] = confusion_matrix[guess][label] + 1
+		else:
+			confusion_matrix[10][label] = confusion_matrix[10][label] + 1
+		label_count[label] = label_count[label] + 1
+
+	for row in range(0, len(confusion_matrix)):
+		for label in range(0, len(confusion_matrix[row])):
+			confusion_matrix[row][label] = confusion_matrix[row][label] / label_count[label]
+	return confusion_matrix
+
+
+def print_confusion_matrix(matrix):	
+	for row in matrix:
+		print row
+
 
 def main():
 	training_set_a = load("hw4atrain.txt")
@@ -154,15 +188,21 @@ def main():
 	test_set_b = load("hw4btest.txt")
 	debug_set = load("test.txt")
 
+	p = 3
 	convertLabel(training_set_a, [0], [6])
 	convertLabel(test_set_a, [0], [6])
 
-	#vecs = perceptron(training_set_a)
-	#print voted_perceptron(test_set_a, vecs)
-	#print average_perceptron(test_set_a, vecs)
+	vecs = perceptron(training_set_a, p)
+	print "Voted Perceptron after " + str(p) + " pass"
+	print voted_perceptron(training_set_a, vecs)
+	print "Average Perceptron after " + str(p) + " pass"
+	print average_perceptron(training_set_a, vecs)
+	print "Normal Perceptron after " + str(p) + " pass"
+	print normal_perceptron(training_set_a, vecs)
+
 
 	w_vectors = one_vs_all_vector_generate(training_set_b)
-	print one_vs_all(test_set_b, w_vectors)
-
+	cm =  one_vs_all(test_set_b, w_vectors)
+	print_confusion_matrix(cm)
 if __name__ == '__main__':
 	main()
